@@ -2,6 +2,7 @@ from datetime import date
 from datetime import datetime                         
 from pathlib import Path
 import json
+import math
 
 FILE_PATH=Path(__file__).parent / "expenses.json"
 
@@ -13,17 +14,49 @@ class ExpenseTracker:
             json.dump(self.expenses,f,indent=4)
             print("expense successfully saved")
 
+    
     def load_expenses(self):
-        if FILE_PATH.exists():
-            with FILE_PATH.open("r",encoding="utf-8") as f:
-                self.expenses=json.load(f)
-        else:
-            self.expenses=[]
+        print("File path:", FILE_PATH.resolve())
+        print("File exists:", FILE_PATH.exists())
+        try:
+            if FILE_PATH.exists():
+                with FILE_PATH.open("r", encoding="utf-8") as f:
+                    data = json.load(f)
+
+                if not isinstance(data, list):
+                    raise ValueError("Invalid expense data format")
+
+                self.expenses = data
+            else:
+                self.expenses = []
+
+        except json.JSONDecodeError:
+            backup_path = FILE_PATH.with_suffix(".json.bak")
+            FILE_PATH.replace(backup_path)
+            print(f"Corrupted file backed up to {backup_path}")
+            self.expenses = []
+
+        except UnicodeDecodeError as e:
+            backup_path = FILE_PATH.with_suffix(".json.bak")
+            FILE_PATH.replace(backup_path)
+            print(f"Unreadable file backed up to {backup_path}")
+            self.expenses = []
+
+        except ValueError as e:
+            print(f"Could not load expenses: {e}")
+            self.expenses = []
+
 
     def add_expenses(self, amount, category):
+            if not math.isfinite(amount) or amount<=0:
+                print("Invalid amount")
+                return
+            if not category.strip():
+                print("Category cannot be empty.")
+                return
             transaction ={
-                "amount": abs(amount), 
-                "category": category.lower(), 
+                "amount": amount, 
+                "category": category.strip().lower(), 
                 "date": date.today().strftime("%d-%m-%Y") }
             self.expenses.append(transaction)
             self.save_expenses()
@@ -103,6 +136,9 @@ def main():
                 amount=float(input("Enter the amount: "))
             except ValueError:
                 print("Please, Enter a valid amount")
+                continue
+            if amount<=0:
+                print("Valid amount required!")
                 continue
             tracker.add_expenses(amount,category)
         elif choice==2:
