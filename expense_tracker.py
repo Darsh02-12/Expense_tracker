@@ -3,6 +3,7 @@ from datetime import datetime
 from pathlib import Path
 import json
 import math
+import shutil
 
 FILE_PATH=Path(__file__).parent / "expenses.json"
 
@@ -32,18 +33,20 @@ class ExpenseTracker:
 
         except json.JSONDecodeError:
             backup_path = FILE_PATH.with_suffix(".json.bak")
-            FILE_PATH.replace(backup_path)
+            shutil.copy2(FILE_PATH,backup_path)
             print(f"Corrupted file backed up to {backup_path}")
             self.expenses = []
 
         except UnicodeDecodeError as e:
             backup_path = FILE_PATH.with_suffix(".json.bak")
-            FILE_PATH.replace(backup_path)
+            shutil.copy2(FILE_PATH,backup_path)
             print(f"Unreadable file backed up to {backup_path}")
             self.expenses = []
 
         except ValueError as e:
+            backup_path = FILE_PATH.with_suffix(".json.bak")
             print(f"Could not load expenses: {e}")
+            shutil.copy2(FILE_PATH,backup_path)
             self.expenses = []
 
 
