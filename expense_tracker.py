@@ -15,7 +15,11 @@ class ExpenseTracker:
             json.dump(self.expenses,f,indent=4)
             print("expense successfully saved")
 
-    
+    def create_backup(self):
+        backup_path = FILE_PATH.parent / Path(FILE_PATH.stem + "_" + datetime.now().strftime("%Y%m%d_%H%M%S_%f") + ".json.bak")
+        shutil.copy2(FILE_PATH,backup_path)
+        return backup_path
+
     def load_expenses(self):
         print("File path:", FILE_PATH.resolve())
         print("File exists:", FILE_PATH.exists())
@@ -32,21 +36,18 @@ class ExpenseTracker:
                 self.expenses = []
 
         except json.JSONDecodeError:
-            backup_path = FILE_PATH.with_suffix(".json.bak")
-            shutil.copy2(FILE_PATH,backup_path)
+            backup_path=self.create_backup()
             print(f"Corrupted file backed up to {backup_path}")
             self.expenses = []
 
         except UnicodeDecodeError as e:
-            backup_path = FILE_PATH.with_suffix(".json.bak")
-            shutil.copy2(FILE_PATH,backup_path)
+            backup_path=self.create_backup()
             print(f"Unreadable file backed up to {backup_path}")
             self.expenses = []
 
         except ValueError as e:
-            backup_path = FILE_PATH.with_suffix(".json.bak")
+            backup_path=self.create_backup()
             print(f"Could not load expenses: {e}")
-            shutil.copy2(FILE_PATH,backup_path)
             self.expenses = []
 
 
